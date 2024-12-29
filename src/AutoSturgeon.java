@@ -1,10 +1,14 @@
 import org.dreambot.api.methods.container.impl.Inventory;
+import org.dreambot.api.methods.container.impl.bank.BankMode;
 import org.dreambot.api.script.AbstractScript;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.methods.container.impl.bank.Bank;
+import org.dreambot.api.methods.grandexchange.GrandExchange;
+import org.dreambot.api.methods.grandexchange.GrandExchangeItem;
+import org.dreambot.api.methods.grandexchange.LivePrices;
 
 
 
@@ -14,6 +18,7 @@ public class AutoSturgeon extends AbstractScript {
 
     @Override
     public int onLoop() {
+
 
         String itemToWithdraw = "Chocolate bar";
 
@@ -26,21 +31,56 @@ public class AutoSturgeon extends AbstractScript {
         Item chocolate = Inventory.getItemInSlot(26);
 
         if (Inventory.isFull() && knife != null && chocolate != null) {
-            while(!chocolate.getName().equals("Chocolate dust")) {
-                    chocolate = Inventory.getItemInSlot(26);
-                    knife.interact();
-                    chocolate.interact("use");
-                }
+            // Use knife on chocolate bar while inventory contains chocolate bar
+            do {
+                // Use the knife
+                knife.interact();
 
+                // Use the chocolate bar
+                chocolate = Inventory.getItemInSlot(26);  // Re-fetch chocolate to ensure it's updated
+                chocolate.interact("Use");
 
+            } while (Inventory.contains("Chocolate bar"));
+
+            // Once chocolate becomes chocolate dust, deposit the item
             Item depositItem = Inventory.get("Chocolate dust");
-
-            if (chocolate.getName().equals("Chocolate dust")) {
+            if (chocolate != null && chocolate.getName().equals("Chocolate dust")) {
                 bankHandler(depositItem, itemToWithdraw);
             }
         }
 
 
+
+
+        /*
+
+        THIS IS A BRAINSTORMED VERSION OF HOW I WILL HANDLE THE GRAND EXCHANGE WHEN I RUN OUT OF ITEMS FROM THE BANK
+        Bank.open();
+
+        if (!Bank.contains("Chocolate bar")) {
+            Bank.setWithdrawMode(BankMode.NOTE);
+            Bank.withdrawAll("Chocolate dust");
+            Bank.setWithdrawMode(BankMode.ITEM);
+        }
+
+        Bank.close();
+
+        GrandExchange.open();
+
+        if(Inventory.contains("Chocolate dust")) {
+            Item item = Inventory.get("Chocolate dust");
+
+            if (item != null) {
+
+                int lowPrice = LivePrices.getLow(item);
+                Logger.log(lowPrice);
+
+                GrandExchange.sellItem(Inventory.get("Chocolate dust").getID(), item.getAmount(), lowPrice );
+            }
+
+        }
+
+         */
 
         return 1000; // Pause for 1 second
     }
