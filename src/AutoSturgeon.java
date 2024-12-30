@@ -12,6 +12,7 @@ import org.dreambot.api.methods.grandexchange.LivePrices;
 
 
 
+
 @ScriptManifest(name = "Script Name", description = "My script description!", author = "Developer Name",
         version = 1.0, category = Category.WOODCUTTING, image = "")
 public class AutoSturgeon extends AbstractScript {
@@ -22,7 +23,13 @@ public class AutoSturgeon extends AbstractScript {
 
         String itemToWithdraw = "Chocolate bar";
 
-        if (!Inventory.isFull()) {
+        if (!Inventory.isFull() && bankHandlerOutOfStock(itemToWithdraw)) {
+
+            Logger.log("Ln 26");
+            sleep(1500);
+            buyItemHandler(itemToWithdraw);
+        }
+        else if (!Inventory.isFull()) {
             Logger.log("Inventory is not full");
             bankHandlerEmptyInventory(itemToWithdraw);
         }
@@ -42,6 +49,8 @@ public class AutoSturgeon extends AbstractScript {
 
             } while (Inventory.contains("Chocolate bar"));
 
+            Logger.log("Finished Crafting...");
+            sleep(500);
             // Once chocolate becomes chocolate dust, deposit the item
             Item depositItem = Inventory.get("Chocolate dust");
             if (chocolate != null && chocolate.getName().equals("Chocolate dust")) {
@@ -96,6 +105,16 @@ public class AutoSturgeon extends AbstractScript {
         }
     }
 
+    public Boolean bankHandlerOutOfStock(String checkFor) {
+        if (!Bank.isOpen()) {
+            Bank.open();
+        }
+
+        boolean res = !Bank.contains(checkFor);
+        Logger.log("Item you are looking for: " + checkFor + " is out of stock = " + res);
+        sleep(2000);
+        return res;
+    }
     public void bankHandlerEmptyInventory(String itemToWithdraw) {
         if (!Bank.open()) {
             Bank.open();
@@ -152,6 +171,78 @@ public class AutoSturgeon extends AbstractScript {
         }
 
         Bank.close();
+    }
+
+    public void buyItemHandler(String item) {
+        int MAX_CAP = 2000000;
+        int coins = 0;
+        int finalAmount = 0;
+        int highPrice = LivePrices.getHigh(item);
+
+        if (!GrandExchange.isOpen()) {
+
+            Logger.log("Checking bank to see how much coins you have!");
+            sleep(2000);
+            Bank.open();
+            if (Bank.contains("Coins")) {
+                Logger.log("Coins found");
+                sleep(2000);
+                coins = Bank.get("Coins").getAmount();
+            }
+
+            else {
+                Logger.log("You have no monay :(");
+            }
+
+            Logger.log("You have this many coins: " + coins);
+            sleep(2000);
+            Bank.close();
+            GrandExchange.open();
+        }
+
+        Logger.log("Initiating buy process");
+        if (GrandExchange.contains(item)) {
+            Logger.log("Order for this item is already placed");
+        }
+        else if (coins >= MAX_CAP) {
+            finalAmount = MAX_CAP / highPrice;
+            GrandExchange.buyItem(
+                    item,
+                    finalAmount,
+                    highPrice
+            );
+
+            Logger.log("Successfully placed buy order");
+        }
+        else if (coins > highPrice) {
+            finalAmount = coins / highPrice;
+            GrandExchange.buyItem(
+                    item,
+                    finalAmount,
+                    highPrice
+            );
+            Logger.log("Successfully placed buy order");
+        }
+
+        else {
+            Logger.log("You cant afford the item you are trying to buy");
+
+            // CAN PASS IN A SELL HANDLER
+        }
+
+        while (GrandExchange.isOpen()) {
+            if (GrandExchange.isReadyToCollect()) {
+                Logger.log("Ready to collect items from Grand Exchange.");
+                GrandExchange.collectToBank();
+                sleep(1000); // Ensure proper collection before closing
+                break;
+            } else {
+                Logger.log("Waiting for the order to complete...");
+                sleep(5000); // Sleep and recheck
+            }
+        }
+
+        GrandExchange.close();
     }
 
 
