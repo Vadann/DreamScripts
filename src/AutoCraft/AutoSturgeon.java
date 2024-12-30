@@ -1,3 +1,5 @@
+package AutoCraft;
+
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.BankMode;
 import org.dreambot.api.script.AbstractScript;
@@ -13,7 +15,7 @@ import org.dreambot.api.methods.grandexchange.LivePrices;
 
 
 
-@ScriptManifest(name = "Script Name", description = "My script description!", author = "Developer Name",
+@ScriptManifest(name = "Auto Craft", description = "My script description!", author = "Developer Name",
         version = 1.0, category = Category.WOODCUTTING, image = "")
 public class AutoSturgeon extends AbstractScript {
 
@@ -21,13 +23,14 @@ public class AutoSturgeon extends AbstractScript {
     public int onLoop() {
 
 
-        String itemToWithdraw = "Chocolate bar";
+        String itemToWithdraw = "Leaping sturgeon";
+        String itemToSell = "Caviar";
 
-        if (!Inventory.isFull() && bankHandlerOutOfStock(itemToWithdraw)) {
+        if (!Inventory.isFull() && bankIsOutOfStock(itemToWithdraw)) {
 
             Logger.log("Ln 26");
             sleep(1500);
-            buyItemHandler(itemToWithdraw);
+            GrandExchangeHandler(itemToWithdraw, itemToSell);
         }
         else if (!Inventory.isFull()) {
             Logger.log("Inventory is not full");
@@ -35,25 +38,28 @@ public class AutoSturgeon extends AbstractScript {
         }
 
         Item knife = Inventory.get("Knife");
-        Item chocolate = Inventory.getItemInSlot(26);
+        Item fish = Inventory.getItemInSlot(26);
 
-        if (Inventory.isFull() && knife != null && chocolate != null) {
+        if (Inventory.isFull() && knife != null && fish != null) {
             // Use knife on chocolate bar while inventory contains chocolate bar
             do {
                 // Use the knife
                 knife.interact();
 
                 // Use the chocolate bar
-                chocolate = Inventory.getItemInSlot(26);  // Re-fetch chocolate to ensure it's updated
-                chocolate.interact("Use");
+                fish = Inventory.getItemInSlot(26);  // Re-fetch chocolate to ensure it's updated
 
-            } while (Inventory.contains("Chocolate bar"));
+                if(fish != null) {
+                    fish.interact("Use");
+                }
+
+            } while (Inventory.contains("Leaping sturgeon"));
 
             Logger.log("Finished Crafting...");
             sleep(500);
             // Once chocolate becomes chocolate dust, deposit the item
-            Item depositItem = Inventory.get("Chocolate dust");
-            if (chocolate != null && chocolate.getName().equals("Chocolate dust")) {
+            Item depositItem = Inventory.get("Caviar");
+            if (!Inventory.contains("Leaping sturgeon")) {
                 bankHandler(depositItem, itemToWithdraw);
             }
         }
@@ -95,17 +101,7 @@ public class AutoSturgeon extends AbstractScript {
     }
 
 
-    public void useOnOtherItem(Item one, Item two) {
-        if (Inventory.contains(one) && Inventory.contains(two)) {
-            one.useOn(two);
-        }
-
-        else {
-            Logger.log("One of the items was not found in the inventory");
-        }
-    }
-
-    public Boolean bankHandlerOutOfStock(String checkFor) {
+    public Boolean bankIsOutOfStock(String checkFor) {
         if (!Bank.isOpen()) {
             Bank.open();
         }
@@ -156,31 +152,74 @@ public class AutoSturgeon extends AbstractScript {
         }
 
         Logger.log("Checking bank to see if withdrawable item is available... ");
-        sleep(1000);
+        // sleep(1000);
         if (withdraw != null && Bank.contains(withdraw.getName())) {
 
             Logger.log("Item to withdraw found... withdrawing all");
             Bank.withdrawAll(withdraw.getName());
-            sleep(500);
+            // sleep(500);
         } else if (withdraw == null) {
             Logger.log("Cannot withdraw: Item is null.");
-            sleep(5000);
+            // sleep(5000);
         } else if (!Bank.contains(withdraw.getName())) {
             Logger.log("The item to withdraw is not available in the bank.");
-            sleep(5000);
+            // sleep(5000);
         }
 
         Bank.close();
     }
 
-    public void buyItemHandler(String item) {
+    public void GrandExchangeHandler(String item, String sellItem) {
         int MAX_CAP = 2000000;
         int coins = 0;
         int finalAmount = 0;
-        int highPrice = LivePrices.getHigh(item);
+        // int highPrice = LivePrices.getHigh(item) + 5;
+        int highPrice = 126;
+        // int lowPrice = LivePrices.getLow(sellItem) - 3;
+        int lowPrice = 210;
+        int sellFinalAmount = 0;
 
         if (!GrandExchange.isOpen()) {
+            // Process to SELL item
 
+            Logger.log("Initiating sell process ...");
+            sleep(1500);
+            Bank.open();
+
+            Logger.log("Checking if the bank contains your selling item");
+            sleep(1500);
+            if (Bank.contains(sellItem)) {
+                Logger.log("Successfully found selling item... Now withdrawing as a note");
+                sleep(1500);
+                Bank.setWithdrawMode(BankMode.NOTE);
+                sleep(1500);
+                Bank.withdrawAll(sellItem);
+                sleep(1500);
+                Bank.setWithdrawMode(BankMode.ITEM);
+
+            }
+
+            Logger.log("Closing bank...");
+            sleep(1500);
+            Bank.close();
+
+
+            if (Inventory.contains(sellItem)) {
+                sellFinalAmount = Inventory.get(sellItem).getAmount();
+            }
+
+            Logger.log("Initiating GE sell process..");
+            sleep(1500);
+            GrandExchange.open();
+
+            GrandExchange.sellItem(sellItem, sellFinalAmount, lowPrice);
+
+            Logger.log("Successfully listed the offer to sell");
+            sleep(1500);
+            GrandExchange.close();
+
+
+            // Process to BUY item
             Logger.log("Checking bank to see how much coins you have!");
             sleep(2000);
             Bank.open();
@@ -208,7 +247,7 @@ public class AutoSturgeon extends AbstractScript {
             finalAmount = MAX_CAP / highPrice;
             GrandExchange.buyItem(
                     item,
-                    finalAmount,
+                    finalAmount / 2,
                     highPrice
             );
 
@@ -218,7 +257,7 @@ public class AutoSturgeon extends AbstractScript {
             finalAmount = coins / highPrice;
             GrandExchange.buyItem(
                     item,
-                    finalAmount,
+                    finalAmount / 2,
                     highPrice
             );
             Logger.log("Successfully placed buy order");
@@ -227,7 +266,6 @@ public class AutoSturgeon extends AbstractScript {
         else {
             Logger.log("You cant afford the item you are trying to buy");
 
-            // CAN PASS IN A SELL HANDLER
         }
 
         while (GrandExchange.isOpen()) {
@@ -244,6 +282,5 @@ public class AutoSturgeon extends AbstractScript {
 
         GrandExchange.close();
     }
-
 
 }
