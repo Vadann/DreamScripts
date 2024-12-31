@@ -22,16 +22,17 @@ public class AutoSturgeon extends AbstractScript {
     @Override
     public int onLoop() {
 
-
         String itemToWithdraw = "Leaping sturgeon";
         String itemToSell = "Caviar";
 
+        // This block checks if we are out of stock, and if so sells what we have and buys more stock.
         if (!Inventory.isFull() && bankIsOutOfStock(itemToWithdraw)) {
-
-            Logger.log("Ln 26");
-            sleep(1500);
-            GrandExchangeHandler(itemToWithdraw, itemToSell);
+            sleep(250);
+            stop(); // Temporarily
+            // startGE(itemToWithdraw, itemToSell);
         }
+
+        // This block handles the case where we need to restock our inventory.
         else if (!Inventory.isFull()) {
             Logger.log("Inventory is not full");
             bankHandlerEmptyInventory(itemToWithdraw);
@@ -40,15 +41,15 @@ public class AutoSturgeon extends AbstractScript {
         Item knife = Inventory.get("Knife");
         Item fish = Inventory.getItemInSlot(26);
 
+        // Ensures we have a full inventory and non null items before we can start the crafting process
         if (Inventory.isFull() && knife != null && fish != null) {
-            // Use knife on chocolate bar while inventory contains chocolate bar
+
+            // This starts the crafting process
             do {
-                // Use the knife
                 knife.interact();
+                fish = Inventory.getItemInSlot(26);  // Re-Sync the current status of the inventory to avoid a null after slot[26] is cut.
 
-                // Use the chocolate bar
-                fish = Inventory.getItemInSlot(26);  // Re-fetch chocolate to ensure it's updated
-
+                // This if block prevents a duplicate cut of slot 26 sometimes it executes to fast.
                 if(fish != null) {
                     fish.interact("Use");
                 }
@@ -57,45 +58,14 @@ public class AutoSturgeon extends AbstractScript {
 
             Logger.log("Finished Crafting...");
             sleep(500);
-            // Once chocolate becomes chocolate dust, deposit the item
+
+            // Crafting is done... So now it will deposit our depositItem into the bank
             Item depositItem = Inventory.get("Caviar");
             if (!Inventory.contains("Leaping sturgeon")) {
                 bankHandler(depositItem, itemToWithdraw);
             }
         }
 
-
-
-
-        /*
-
-        THIS IS A BRAINSTORMED VERSION OF HOW I WILL HANDLE THE GRAND EXCHANGE WHEN I RUN OUT OF ITEMS FROM THE BANK
-        Bank.open();
-
-        if (!Bank.contains("Chocolate bar")) {
-            Bank.setWithdrawMode(BankMode.NOTE);
-            Bank.withdrawAll("Chocolate dust");
-            Bank.setWithdrawMode(BankMode.ITEM);
-        }
-
-        Bank.close();
-
-        GrandExchange.open();
-
-        if(Inventory.contains("Chocolate dust")) {
-            Item item = Inventory.get("Chocolate dust");
-
-            if (item != null) {
-
-                int lowPrice = LivePrices.getLow(item);
-                Logger.log(lowPrice);
-
-                GrandExchange.sellItem(Inventory.get("Chocolate dust").getID(), item.getAmount(), lowPrice );
-            }
-
-        }
-
-         */
 
         return 1000; // Pause for 1 second
     }
@@ -122,10 +92,6 @@ public class AutoSturgeon extends AbstractScript {
             withdraw = Bank.get(itemToWithdraw);
         }
 
-        else {
-            Logger.log("No more instances of the item you want to withdraw are left");
-            stop();
-        }
 
         if (withdraw != null) {
             Bank.withdrawAll(withdraw.getName());
@@ -169,15 +135,15 @@ public class AutoSturgeon extends AbstractScript {
         Bank.close();
     }
 
-    public void GrandExchangeHandler(String item, String sellItem) {
-        int MAX_CAP = 2000000;
+    // This method handles resupplying gold, and restocking item to process.
+
+
+    public void startGE(String sellingItem, String buyingItem) {
+        int MAX_CAP = 1000000;
         int coins = 0;
-        int finalAmount = 0;
-        // int highPrice = LivePrices.getHigh(item) + 5;
-        int highPrice = 126;
-        // int lowPrice = LivePrices.getLow(sellItem) - 3;
-        int lowPrice = 210;
-        int sellFinalAmount = 0;
+        int lowPrice = 1000;
+
+
 
         if (!GrandExchange.isOpen()) {
             // Process to SELL item
@@ -188,99 +154,89 @@ public class AutoSturgeon extends AbstractScript {
 
             Logger.log("Checking if the bank contains your selling item");
             sleep(1500);
-            if (Bank.contains(sellItem)) {
+            if (Bank.contains(sellingItem)) {
                 Logger.log("Successfully found selling item... Now withdrawing as a note");
                 sleep(1500);
                 Bank.setWithdrawMode(BankMode.NOTE);
                 sleep(1500);
-                Bank.withdrawAll(sellItem);
+                Bank.withdrawAll(sellingItem);
                 sleep(1500);
                 Bank.setWithdrawMode(BankMode.ITEM);
 
             }
-
-            Logger.log("Closing bank...");
-            sleep(1500);
-            Bank.close();
-
-
-            if (Inventory.contains(sellItem)) {
-                sellFinalAmount = Inventory.get(sellItem).getAmount();
+            else {
+                Logger.log("You have nothing to sell");
             }
 
-            Logger.log("Initiating GE sell process..");
-            sleep(1500);
-            GrandExchange.open();
-
-            GrandExchange.sellItem(sellItem, sellFinalAmount, lowPrice);
-
-            Logger.log("Successfully listed the offer to sell");
-            sleep(1500);
-            GrandExchange.close();
-
-
-            // Process to BUY item
+            // Also checks coins while in this menu to make buying easier later.
             Logger.log("Checking bank to see how much coins you have!");
-            sleep(2000);
+            sleep(250);
             Bank.open();
             if (Bank.contains("Coins")) {
                 Logger.log("Coins found");
-                sleep(2000);
+                sleep(250);
                 coins = Bank.get("Coins").getAmount();
+                Logger.log(coins);
             }
 
             else {
                 Logger.log("You have no monay :(");
             }
 
-            Logger.log("You have this many coins: " + coins);
-            sleep(2000);
+            Logger.log("Closing bank...");
+            sleep(250);
             Bank.close();
+
             GrandExchange.open();
-        }
+            if (Inventory.contains(sellingItem)) {
+                Logger.log("Initiating GE sell process..");
+                sleep(1500);
 
-        Logger.log("Initiating buy process");
-        if (GrandExchange.contains(item)) {
-            Logger.log("Order for this item is already placed");
-        }
-        else if (coins >= MAX_CAP) {
-            finalAmount = MAX_CAP / highPrice;
-            GrandExchange.buyItem(
-                    item,
-                    finalAmount / 2,
-                    highPrice
-            );
 
-            Logger.log("Successfully placed buy order");
-        }
-        else if (coins > highPrice) {
-            finalAmount = coins / highPrice;
-            GrandExchange.buyItem(
-                    item,
-                    finalAmount / 2,
-                    highPrice
-            );
-            Logger.log("Successfully placed buy order");
-        }
+                GrandExchange.sellItem(sellingItem, Inventory.get(sellingItem).getAmount(), lowPrice);
 
-        else {
-            Logger.log("You cant afford the item you are trying to buy");
+                Logger.log("Successfully listed the offer to sell");
+                sleep(1500);
 
-        }
-
-        while (GrandExchange.isOpen()) {
-            if (GrandExchange.isReadyToCollect()) {
-                Logger.log("Ready to collect items from Grand Exchange.");
-                GrandExchange.collectToBank();
-                sleep(1000); // Ensure proper collection before closing
-                break;
-            } else {
-                Logger.log("Waiting for the order to complete...");
-                sleep(5000); // Sleep and recheck
             }
+
+            Logger.log("Initiating buy process... ");
+
+            if (GrandExchange.contains(buyingItem)) {
+                Logger.log("Order for this item is already placed");
+
+                Logger.log("Waiting to collect...");
+                if(!GrandExchange.isReadyToCollect()) {
+                    sleep(5000);
+                    Logger.log("Im waiting");
+                    GrandExchange.collectToBank();
+                }
+            }
+
+            else if (coins >= MAX_CAP) {
+                GrandExchange.buyItem(
+                        buyingItem,
+                        (MAX_CAP / LivePrices.getHigh(buyingItem)) / 2,
+                        LivePrices.getHigh(buyingItem)
+                );
+
+                Logger.log("Successfully placed buy order via ln 358");
+            }
+            else if (coins > LivePrices.getHigh(buyingItem)) {
+                GrandExchange.buyItem(
+                        buyingItem,
+                        (coins / LivePrices.get(buyingItem)) / 2,
+                        LivePrices.getHigh(buyingItem)
+                );
+                Logger.log("Successfully placed buy order via Ln 367");
+            }
+
+            else {
+                Logger.log("You cant afford the item you are trying to buy");
+
+            }
+
+            GrandExchange.close();
         }
-
-        GrandExchange.close();
     }
-
 }
