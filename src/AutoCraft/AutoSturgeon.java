@@ -2,6 +2,10 @@ package AutoCraft;
 
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.BankMode;
+import org.dreambot.api.methods.input.mouse.MouseSettings;
+import org.dreambot.api.methods.interactive.Players;
+import org.dreambot.api.methods.map.Area;
+import org.dreambot.api.methods.walking.impl.Walking;
 import org.dreambot.api.script.AbstractScript;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
@@ -9,20 +13,39 @@ import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.grandexchange.GrandExchange;
-import org.dreambot.api.methods.grandexchange.GrandExchangeItem;
 import org.dreambot.api.methods.grandexchange.LivePrices;
 
 import core.BankHandler;
+import org.dreambot.api.wrappers.widgets.Menu;
 
-
-
+import java.util.ArrayList;
+import java.util.List;
 
 
 @ScriptManifest(name = "Auto Craft", description = "My script description!", author = "Developer Name",
         version = 1.0, category = Category.WOODCUTTING, image = "")
 public class AutoSturgeon extends AbstractScript {
-
     BankHandler bankHandler = new BankHandler();
+    Area area = new Area(3161, 3493, 3167, 3487);
+    int currentItemIndex = 0;
+    public void onStart() {
+        Logger.log(MouseSettings.getSpeed());
+        MouseSettings.setSpeed(75);
+
+        if (!area.contains(Players.getLocal())) {
+            Walking.walk(area.getRandomTile());
+
+        }
+
+        if (Bank.isOpen()) {
+            Bank.close();
+            Logger.log("Closing Bank");
+        }
+
+        if (GrandExchange.isOpen()) {
+            GrandExchange.close();
+        }
+    }
     @Override
     public int onLoop() {
 
