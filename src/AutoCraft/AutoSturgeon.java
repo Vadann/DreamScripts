@@ -54,6 +54,10 @@ public class AutoSturgeon extends AbstractScript {
 
         // This block checks if we are out of stock, and if so sells what we have and buys more stock.
         if (!Inventory.isFull() && bankHandler.isOutOfStock(itemToWithdraw)) {
+            if (Inventory.contains(itemToWithdraw)) {
+                bankHandler.depositItem(Inventory.get(itemToWithdraw), true);
+                Logger.log("Successfully deposited leftoever items.");
+            }
             sleep(250);
             stop(); // Temporarily
             // startGE(itemToWithdraw, itemToSell);
