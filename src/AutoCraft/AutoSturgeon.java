@@ -1,5 +1,6 @@
 package AutoCraft;
 
+import org.dreambot.api.Client;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.BankMode;
 import org.dreambot.api.methods.input.mouse.MouseSettings;
@@ -9,13 +10,16 @@ import org.dreambot.api.methods.walking.impl.Walking;
 import org.dreambot.api.script.AbstractScript;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
+import org.dreambot.api.script.listener.ChatListener;
 import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.grandexchange.GrandExchange;
 import org.dreambot.api.methods.grandexchange.LivePrices;
+import org.dreambot.api.wrappers.widgets.message.Message;
 
 import core.BankHandler;
+import core.ProcessingHandler;
 import org.dreambot.api.wrappers.widgets.Menu;
 
 import java.util.ArrayList;
@@ -25,7 +29,7 @@ import java.util.List;
 @ScriptManifest(name = "Auto Craft", description = "My script description!", author = "Developer Name",
         version = 1.0, category = Category.WOODCUTTING, image = "")
 public class AutoSturgeon extends AbstractScript {
-    BankHandler bankHandler = new BankHandler();
+    ProcessingHandler proccessingHandler = new ProcessingHandler();
     Area area = new Area(3161, 3493, 3167, 3487);
     int currentItemIndex = 0;
     public void onStart() {
@@ -52,58 +56,10 @@ public class AutoSturgeon extends AbstractScript {
         String itemToWithdraw = "Leaping sturgeon";
         String itemToSell = "Caviar";
 
-        // This block checks if we are out of stock, and if so sells what we have and buys more stock.
-        if (!Inventory.isFull() && bankHandler.isOutOfStock(itemToWithdraw)) {
-            if (Inventory.contains(itemToWithdraw)) {
-                bankHandler.depositItem(Inventory.get(itemToWithdraw), true);
-                Logger.log("Successfully deposited leftoever items.");
-            }
-            sleep(250);
-            stop(); // Temporarily
-            // startGE(itemToWithdraw, itemToSell);
-        }
-
-        // This block handles the case where we need to restock our inventory.
-        else if (!Inventory.isFull()) {
-            Logger.log("Inventory is not full");
-            bankHandler.restock(itemToWithdraw);
-        }
-
-        Item knife = Inventory.get("Knife");
-        Item fish = Inventory.getItemInSlot(26);
-
-        // Ensures we have a full inventory and non null items before we can start the crafting process
-        if (Inventory.isFull() && knife != null && fish != null) {
-
-            // This starts the crafting process
-            do {
-                knife.interact();
-                fish = Inventory.getItemInSlot(26);  // Re-Sync the current status of the inventory to avoid a null after slot[26] is cut.
-
-                // This if block prevents a duplicate cut of slot 26 sometimes it executes to fast.
-                if(fish != null) {
-                    fish.interact("Use");
-
-                }
-                else {
-                    break;
-                }
-
-            } while (fish.getName().equals(itemToWithdraw));
-
-            Logger.log("Finished Crafting...");
-            sleep(500);
-
-            // Crafting is done... So now it will deposit our depositItem into the bank
-            Item depositItem = Inventory.get("Caviar");
-            bankHandler.depositAndWithdraw(depositItem, itemToWithdraw);
-        }
-
-        return 1000; // Pause for 1 second
+        return (proccessingHandler.craft(itemToWithdraw,itemToSell));
     }
 
     // This method handles resupplying gold, and restocking item to process.
-
 
     public void startGE(String sellingItem, String buyingItem) {
         int MAX_CAP = 1000000;
