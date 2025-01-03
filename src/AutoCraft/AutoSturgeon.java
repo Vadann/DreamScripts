@@ -10,20 +10,15 @@ import org.dreambot.api.methods.walking.impl.Walking;
 import org.dreambot.api.script.AbstractScript;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
-import org.dreambot.api.script.listener.ChatListener;
 import org.dreambot.api.utilities.Logger;
-import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.grandexchange.GrandExchange;
 import org.dreambot.api.methods.grandexchange.LivePrices;
-import org.dreambot.api.wrappers.widgets.message.Message;
 
-import core.BankHandler;
 import core.ProcessingHandler;
-import org.dreambot.api.wrappers.widgets.Menu;
 
-import java.util.ArrayList;
-import java.util.List;
+import javax.swing.*;
+import java.awt.*;
 
 
 @ScriptManifest(name = "Auto Craft", description = "My script description!", author = "Developer Name",
@@ -49,13 +44,21 @@ public class AutoSturgeon extends AbstractScript {
         if (GrandExchange.isOpen()) {
             GrandExchange.close();
         }
+
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                createGUI();
+            }
+        });
     }
+
+
     @Override
     public int onLoop() {
 
         String itemToWithdraw = "Leaping sturgeon";
         String itemToSell = "Caviar";
-
         return (proccessingHandler.craft(itemToWithdraw,itemToSell));
     }
 
@@ -161,5 +164,21 @@ public class AutoSturgeon extends AbstractScript {
 
             GrandExchange.close();
         }
+    }
+
+    private static void createGUI() {
+        // Create JFrame instance
+        JFrame frame = new JFrame();
+        frame.setTitle("Auto Crafter");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setLocationRelativeTo(Client.getCanvas()); // Assuming Client.getCanvas() works
+        frame.setPreferredSize(new Dimension(300, 170));
+
+        // Use BorderLayout for the content pane
+        frame.getContentPane().setLayout(new BorderLayout());
+
+        // Pack and make the frame visible
+        frame.pack();
+        frame.setVisible(true);
     }
 }
