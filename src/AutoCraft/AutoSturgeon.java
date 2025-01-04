@@ -180,5 +180,11 @@ public class AutoSturgeon extends AbstractScript {
         // Pack and make the frame visible
         frame.pack();
         frame.setVisible(true);
+
+        JPanel settingPanel = new JPanel();
+        settingPanel.setLayout(new GridLayout(0, 2));
+        JCheckBox craftCheckBox = new JCheckBox();
+        craftCheckBox.setText("Start Crafting");
+        settingPanel.add(craftCheckBox);
     }
 }
