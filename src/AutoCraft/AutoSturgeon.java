@@ -1,6 +1,7 @@
 package AutoCraft;
 
 import GUI.CraftingGUI;
+import core.BankHandler;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.BankMode;
 import org.dreambot.api.methods.input.mouse.MouseSettings;
@@ -18,6 +19,8 @@ import org.dreambot.api.methods.grandexchange.LivePrices;
 import core.ProcessingHandler;
 
 import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @ScriptManifest(name = "Auto Craft", description = "My script description!", author = "Developer Name",
@@ -25,11 +28,17 @@ import javax.swing.*;
 public class AutoSturgeon extends AbstractScript {
 
     ProcessingHandler proccessingHandler = new ProcessingHandler();
+    BankHandler bankHandler = new BankHandler();
     CraftingGUI gui;
+    public String itemToWithdraw = "Leaping sturgeon";
+    public String itemToSell = "Caviar";
+
+    public Map<String, String> crafterMap = new HashMap<>();
     Area area = new Area(3161, 3493, 3167, 3487);
 
     public void onStart() {
-
+        crafterMap.put("Leaping sturgeon", "Caviar");
+        crafterMap.put("Chocolate bar", "Chocolate dust");
         Logger.log(MouseSettings.getSpeed());
         MouseSettings.setSpeed(75);
 
@@ -47,15 +56,17 @@ public class AutoSturgeon extends AbstractScript {
             GrandExchange.close();
         }
 
+        // This will initialize the gui from the CraftingGUI.java class that I made with the GUI Designer
         SwingUtilities.invokeLater(() -> gui = new CraftingGUI());
 
     }
 
     @Override
     public int onLoop() {
-        String itemToWithdraw = "Leaping sturgeon";
-        String itemToSell = "Caviar";
+
+        // Important to null check GUI here!!!
         if (gui != null && gui.isRunning()) {
+            Logger.log(gui.getCraftables().toString());
             return proccessingHandler.craft(itemToWithdraw, itemToSell);
         }
         // return (proccessingHandler.craft(itemToWithdraw,itemToSell));

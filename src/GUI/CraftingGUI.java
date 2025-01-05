@@ -4,6 +4,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
+
+
 
 public class CraftingGUI extends JFrame {
 
@@ -19,6 +23,8 @@ public class CraftingGUI extends JFrame {
 
     public boolean isRunning = false;
     public boolean shouldStop = false;
+
+    public List<String> craftables = new ArrayList<>();
 
     public CraftingGUI() {
         // Set up the UI on the Event Dispatch Thread (EDT)
@@ -51,8 +57,26 @@ public class CraftingGUI extends JFrame {
                         isRunning = false;
                     }
                 });
+
+                leapingSturgeonCheckBox.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (leapingSturgeonCheckBox.isSelected()) {
+                            craftables.add(leapingSturgeonCheckBox.getText());
+                        }
+                    }
+                });
+                chocolateBarCheckBox.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (chocolateBarCheckBox.isSelected()) {
+                            craftables.add(chocolateBarCheckBox.getText());
+                        }
+                    }
+                });
             }
         });
+
     }
 
     public boolean isRunning() {
@@ -61,6 +85,10 @@ public class CraftingGUI extends JFrame {
 
     public boolean shouldStop() {
         return shouldStop;
+    }
+
+    public List<String> getCraftables() {
+        return craftables;
     }
 
 }

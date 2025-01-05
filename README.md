@@ -8,3 +8,8 @@ AutoCrafting:
 
 AutoSkills:
 - (NOT STARTED) Implement basic features that will help me (1. Check the players current level for [skill] and based on that determine what i will do.)
+
+GUI/AUTOCRAFTER:
+
+- Fix bug where it only crafts the selected item. Currently it only does leaping sturgeon by default when you press start.
+    -  Created a list to store all values when selected and a map to get the value associated with it, but need to implement a system that manages handling all selected craftables
