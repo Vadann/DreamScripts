@@ -1,6 +1,6 @@
 package AutoCraft;
 
-import org.dreambot.api.Client;
+import GUI.CraftingGUI;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.BankMode;
 import org.dreambot.api.methods.input.mouse.MouseSettings;
@@ -18,16 +18,18 @@ import org.dreambot.api.methods.grandexchange.LivePrices;
 import core.ProcessingHandler;
 
 import javax.swing.*;
-import java.awt.*;
 
 
 @ScriptManifest(name = "Auto Craft", description = "My script description!", author = "Developer Name",
         version = 1.0, category = Category.WOODCUTTING, image = "")
 public class AutoSturgeon extends AbstractScript {
+
     ProcessingHandler proccessingHandler = new ProcessingHandler();
+    CraftingGUI gui;
     Area area = new Area(3161, 3493, 3167, 3487);
-    int currentItemIndex = 0;
+
     public void onStart() {
+
         Logger.log(MouseSettings.getSpeed());
         MouseSettings.setSpeed(75);
 
@@ -45,21 +47,19 @@ public class AutoSturgeon extends AbstractScript {
             GrandExchange.close();
         }
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                createGUI();
-            }
-        });
-    }
+        SwingUtilities.invokeLater(() -> gui = new CraftingGUI());
 
+    }
 
     @Override
     public int onLoop() {
-
         String itemToWithdraw = "Leaping sturgeon";
         String itemToSell = "Caviar";
-        return (proccessingHandler.craft(itemToWithdraw,itemToSell));
+        if (gui != null && gui.isRunning()) {
+            return proccessingHandler.craft(itemToWithdraw, itemToSell);
+        }
+        // return (proccessingHandler.craft(itemToWithdraw,itemToSell));
+        return 300;
     }
 
     // This method handles resupplying gold, and restocking item to process.
@@ -166,25 +166,4 @@ public class AutoSturgeon extends AbstractScript {
         }
     }
 
-    private static void createGUI() {
-        // Create JFrame instance
-        JFrame frame = new JFrame();
-        frame.setTitle("Auto Crafter");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setLocationRelativeTo(Client.getCanvas()); // Assuming Client.getCanvas() works
-        frame.setPreferredSize(new Dimension(300, 170));
-
-        // Use BorderLayout for the content pane
-        frame.getContentPane().setLayout(new BorderLayout());
-
-        // Pack and make the frame visible
-        frame.pack();
-        frame.setVisible(true);
-
-        JPanel settingPanel = new JPanel();
-        settingPanel.setLayout(new GridLayout(0, 2));
-        JCheckBox craftCheckBox = new JCheckBox();
-        craftCheckBox.setText("Start Crafting");
-        settingPanel.add(craftCheckBox);
-    }
 }

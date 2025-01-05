@@ -21,14 +21,9 @@ public class ProcessingHandler {
             proccessingState = ProcessingState.RESTOCKING;
         }
 
-
-        Item knife = Inventory.get("Knife");
-        Item fish = Inventory.getItemInSlot(26);
-
         // Ensures we have a full inventory and non null items before we can start the crafting process
-        if (Inventory.isFull() && knife != null && fish != null) {
+        if (Inventory.isFull()) {
             proccessingState = ProcessingState.PROCESSING;
-
         }
         
         
@@ -40,35 +35,48 @@ public class ProcessingHandler {
                     Logger.log("Successfully deposited leftoever items.");
                     return -1;
                 }
+                return -1;
             case RESTOCKING:
                 Logger.log("Handling state: RESTOCKING");
                 bankHandler.restock(itemToWithdraw);
             case PROCESSING:
                 Logger.log("Handling state: PROCESSING");
                 // This starts the crafting process
-                do {
+                Item knife = Inventory.contains("Knife") ? Inventory.get("Knife") : null;
 
-                    if (Inventory.getItemInSlot(26).getName().equals(knife.getName())) {
-                        Inventory.drag(knife, 27);
-                    }
-                    knife.interact();
-                    fish = Inventory.getItemInSlot(26);  // Re-Sync the current status of the inventory to avoid a null after slot[26] is cut.
+                Item fish = Inventory.getItemInSlot(26);
+                if (knife != null && fish != null) {
+                    do {
 
-                    // This if block prevents a duplicate cut of slot 26 sometimes it executes to fast.
-                    if(fish != null) {
-                        fish.interact("Use");
+                        if (!Inventory.getItemInSlot(27).getName().equals(knife.getName())) {
+                            Logger.log("Knife is in the wrong slot");
+                            Inventory.drag(knife, 27);
+                            Logger.log("Fixing inventory orientation and restarting state: PROCESSING");
+                            break;
+                        }
+                        knife.interact();
+                        // Logger.log("Interacted with Knife");
+                        fish = Inventory.getItemInSlot(26);  // Re-Sync the current status of the inventory to avoid a null after slot[26] is cut.
 
-                    }
-                    else {
-                        break;
-                    }
+                        // This if block prevents a duplicate cut of slot 26 sometimes it executes to fast.
+                        if(fish != null) {
+                            fish.interact("Use");
+                            //Logger.log("Interacted with fish");
 
-                } while (fish.getName().equals(itemToWithdraw));
+                        }
+                        else {
+                            Logger.log("Fish is null breakign loop");
+                            break;
+                        }
+
+                    } while (fish.getName().equals(itemToWithdraw));
+                }
+
 
                 Logger.log("Finished Crafting...");
                 Item depositItem = Inventory.get(itemToDeposit);
                 bankHandler.depositAndWithdraw(depositItem, itemToWithdraw);
-                break;
+                Logger.log("Finished state: PROCESSING");
             case null: {
                 break;
             }
