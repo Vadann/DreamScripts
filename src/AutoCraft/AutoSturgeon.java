@@ -28,23 +28,16 @@ import java.util.Map;
 public class AutoSturgeon extends AbstractScript {
 
     ProcessingHandler proccessingHandler = new ProcessingHandler();
-    BankHandler bankHandler = new BankHandler();
     CraftingGUI gui;
-    public String itemToWithdraw = "Leaping sturgeon";
-    public String itemToSell = "Caviar";
+    public String itemToWithdraw;
+    public String itemToSell;
 
-    public Map<String, String> crafterMap = new HashMap<>();
     Area area = new Area(3161, 3493, 3167, 3487);
 
     public void onStart() {
-        crafterMap.put("Leaping sturgeon", "Caviar");
-        crafterMap.put("Chocolate bar", "Chocolate dust");
-        Logger.log(MouseSettings.getSpeed());
         MouseSettings.setSpeed(75);
-
         if (!area.contains(Players.getLocal())) {
             Walking.walk(area.getRandomTile());
-
         }
 
         if (Bank.isOpen()) {
@@ -63,12 +56,12 @@ public class AutoSturgeon extends AbstractScript {
 
     @Override
     public int onLoop() {
-
+        // Logger.log(gui);
         // Important to null check GUI here!!!
-        if (gui != null && gui.isRunning()) {
-            Logger.log(gui.getCraftables().toString());
-            return proccessingHandler.craft(itemToWithdraw, itemToSell);
+        if (gui != null) {
+            return proccessingHandler.craft(gui);
         }
+
         // return (proccessingHandler.craft(itemToWithdraw,itemToSell));
         return 300;
     }
