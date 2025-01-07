@@ -7,7 +7,6 @@ import org.dreambot.api.wrappers.items.Item;
 import GUI.CraftingGUI;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ProcessingHandler {
@@ -21,96 +20,114 @@ public class ProcessingHandler {
         crafterMap.put("Chocolate bar", "Chocolate dust");
     }
 
+    // Pass in CraftingGUI gui so that this method can read data strictly from the user event data.
+    // Allows for me to handle swapping between craftable items dynamically
     public int craft(CraftingGUI gui) {
         if (gui.isRunning()) {
 
             Logger.log(gui.getCraftables().toString());
-            ProcessingState proccessingState = null;
+            ProcessingState processingState = null;
 
-            if (gui.getCraftables().isEmpty()) {
+            if (gui.getCraftables() == null || gui.getCraftables().isEmpty()) {
+                Logger.log("No craftables available. Exiting.");
                 return -1;
             }
 
             String itemToWithdraw = gui.getCraftables().getFirst();
-            String itemToDeposit = crafterMap.get(itemToWithdraw);
+            String itemToDeposit = crafterMap.getOrDefault(itemToWithdraw, null);
+
+            if (itemToDeposit == null) {
+                Logger.log("No corresponding item to deposit for: " + itemToWithdraw);
+                return -1;
+            }
+
+            Item knife = Inventory.contains("Knife") ? Inventory.get("Knife") : null;
+
+            if (knife == null) {
+                Logger.log("Knife is missing. Restocking is required.");
+                // Add a restock method for the knife here.
+                return -1;
+            }
+
+            if (!Inventory.getItemInSlot(27).getName().equals(knife.getName())) {
+                Logger.log("Knife is in the wrong slot. Fixing inventory orientation.");
+                Inventory.drag(knife, 27);
+                Logger.log("Inventory orientation fixed.");
+            }
 
             if (!Inventory.isFull() && bankHandler.isOutOfStock(itemToWithdraw)) {
-                proccessingState = ProcessingState.OUT_OF_STOCK;
-                //return -1; // Temporarily
-                // startGE(itemToWithdraw, itemToSell);
+                processingState = ProcessingState.OUT_OF_STOCK;
+            } else if (!Inventory.isFull()) {
+                processingState = ProcessingState.RESTOCKING;
+            } else {
+                processingState = ProcessingState.PROCESSING;
             }
 
-            // This block handles the case where we need to restock our inventory.
-            else if (!Inventory.isFull()) {
-                proccessingState = ProcessingState.RESTOCKING;
-            }
-
-            // Ensures we have a full inventory and non null items before we can start the crafting process
-            if (Inventory.isFull()) {
-                proccessingState = ProcessingState.PROCESSING;
-            }
-
-
-            switch(proccessingState) {
+            switch (processingState) {
                 case OUT_OF_STOCK:
                     Logger.log("Handling state: OUT OF STOCK");
-
                     if (Inventory.contains(itemToWithdraw)) {
                         bankHandler.depositItem(Inventory.get(itemToWithdraw), true);
-                        Logger.log("Successfully deposited leftoever items.");
+                        Logger.log("Successfully deposited leftover items.");
                     }
-
                     gui.getCraftables().removeFirst();
                     break;
 
                 case RESTOCKING:
-                    Logger.log("Handling state: RESTOCKING" + itemToWithdraw);
+                    Logger.log("Handling state: RESTOCKING for " + itemToWithdraw);
                     bankHandler.restock(itemToWithdraw);
+                    break;
+
                 case PROCESSING:
                     Logger.log("Handling state: PROCESSING");
-                    // This starts the crafting process
-                    Item knife = Inventory.contains("Knife") ? Inventory.get("Knife") : null;
+                    Item craftingItem = Inventory.getItemInSlot(26);
 
-                    Item fish = Inventory.getItemInSlot(26);
-                    if (knife != null && fish != null) {
+                    if (craftingItem == null || knife == null) {
+                        Logger.log("Missing crafting items. Exiting processing.");
+                        return -1;
+                    }
 
-                        while (fish.getName().equals(itemToWithdraw)) {
-                            if (!Inventory.getItemInSlot(27).getName().equals(knife.getName())) {
-                                Logger.log("Knife is in the wrong slot");
-                                Inventory.drag(knife, 27);
-                                Logger.log("Fixing inventory orientation and restarting state: PROCESSING");
-                                break;
-                            }
-                            knife.interact();
-                            // Logger.log("Interacted with Knife");
+                    int safeGuard = 0;
+                    while (craftingItem.getName().equals(itemToWithdraw)) {
+                        safeGuard++;
 
-                            fish = Inventory.getItemInSlot(26); // Re-Sync the current status of the inventory to avoid a null after slot[26] is cut.
+                        if (!craftingItem.getName().equals(itemToWithdraw)) {
+                            break;
+                        }
 
-                            // Prevent duplicate cuts by ensuring `fish` is not null.
-                            if (fish != null) {
-                                fish.interact("Use");
-                                // Logger.log("Interacted with fish");
-                            } else {
-                                Logger.log("Fish is null, breaking loop");
-                                break;
-                            }
+                        if (safeGuard > 50) {
+                            Logger.log("Exceeded maximum crafting attempts. Exiting loop.");
+                            break;
+                        }
+
+                        if (!Inventory.getItemInSlot(27).getName().equals(knife.getName())) {
+                            Logger.log("Knife is in the wrong slot. Fixing inventory orientation.");
+                            Inventory.drag(knife, 27);
+                        }
+
+                        knife.interact();
+
+                        craftingItem = Inventory.getItemInSlot(26);
+                        if(craftingItem != null) {
+                            craftingItem.interact();
                         }
 
                     }
 
-                    if (fish != null && fish.getName().equals(itemToDeposit)) {
-                        Logger.log("Finished Crafting...");
+                    if (craftingItem.getName().equals(itemToDeposit)) {
+                        Logger.log("Finished Crafting.");
                         Item depositItem = Inventory.get(itemToDeposit);
                         bankHandler.depositAndWithdraw(depositItem, itemToWithdraw);
                         Logger.log("Finished state: PROCESSING");
                     }
+                    // break;
 
-
-
-                case null: {
+                default:
+                    Logger.log("Unknown or null processing state.");
                     break;
-                }
             }
+
+            return 0;
         }
 
         return 0;

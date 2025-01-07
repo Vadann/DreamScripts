@@ -1,7 +1,6 @@
 package AutoCraft;
 
 import GUI.CraftingGUI;
-import core.BankHandler;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.BankMode;
 import org.dreambot.api.methods.input.mouse.MouseSettings;
@@ -19,9 +18,6 @@ import org.dreambot.api.methods.grandexchange.LivePrices;
 import core.ProcessingHandler;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
-
 
 @ScriptManifest(name = "Auto Craft", description = "My script description!", author = "Developer Name",
         version = 1.0, category = Category.WOODCUTTING, image = "")
@@ -29,8 +25,6 @@ public class AutoSturgeon extends AbstractScript {
 
     ProcessingHandler proccessingHandler = new ProcessingHandler();
     CraftingGUI gui;
-    public String itemToWithdraw;
-    public String itemToSell;
 
     Area area = new Area(3161, 3493, 3167, 3487);
 
