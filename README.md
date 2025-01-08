@@ -9,7 +9,10 @@
 
 
 # AutoSkills:
-- (NOT STARTED) Implement basic features that will help me (1. Check the players current level for [skill] and based on that determine what i will do.)
+- (NOT STARTED) Cooking
+- (NOT STARTED) Fishing
+- (NOT STARTED) Mining
+- (NOT STARTED) Herblore
 
 # GUI/AUTOCRAFTER:
 
