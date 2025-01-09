@@ -1,5 +1,6 @@
 package Quester.quests;
 
+import lombok.extern.java.Log;
 import org.dreambot.api.methods.dialogues.Dialogues;
 import org.dreambot.api.methods.interactive.NPCs;
 import org.dreambot.api.methods.interactive.Players;
@@ -12,14 +13,26 @@ import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.utilities.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 @ScriptManifest(name = "ETC", description = "My script description!", author = "Developer Name",
         version = 1.0, category = Category.WOODCUTTING, image = "")
 public class ErnestTheChicken extends AbstractScript {
 
+    Quest quest = FreeQuest.ERNEST_THE_CHICKEN;
+    Map<String, Integer> dialogues = new HashMap<>();
+    public void onStart() {
+        dialogues.put("Aha, sounds like a quest. I'll help.", 1);
+        if (quest.isFinished()) {
+            Logger.log("Quest is already completed");
+            stop();
+        }
+    }
+
     @Override
     public int onLoop() {
-        Quest quest = FreeQuest.ERNEST_THE_CHICKEN;
         if(!quest.isStarted()) {
             Logger.log("You need to start the quest");
 
