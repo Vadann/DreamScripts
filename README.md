@@ -9,12 +9,21 @@
 
 
 # AutoSkills:
-- (NOT STARTED) Implement basic features that will help me (1. Check the players current level for [skill] and based on that determine what i will do.)
+- (NOT STARTED) Cooking
+- (NOT STARTED) Fishing
+- (NOT STARTED) Mining
+- (NOT STARTED) Herblore
 
-# GUI/AUTOCRAFTER:
+# GUI/AutoCrafter:
 
 - (DONE)Fix bug where it only crafts the selected items. Currently it only does leaping sturgeon by default when you press start.
     -  Created a list to store all values when selected and a map to get the value associated with it, but need to implement a system that manages handling all selected craftables
 
 
 - MORE TO COME :)
+
+# Core:
+- Pathfinding
+- GrandExchange Handler
+- Combat Handler
+  ...
