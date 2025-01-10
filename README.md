@@ -6,7 +6,7 @@
 - (DONE / BUG TEST) Figure out a backend system that can dynamically change the processingItems (itemToWithdraw / sell) to change ingredients when out of stock and  GE limit
 - (DONE) Fix bug where slot 26 is a knife due to an accidental drag.
 - (WIP) Try to figure out how to handle restocking if enabled by user.
-
+- (WIP) Make sure correct tab is open before starting crafting.
 
 # AutoSkills:
 - (NOT STARTED) Cooking
