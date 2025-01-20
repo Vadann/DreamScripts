@@ -16,12 +16,19 @@ import util.BankUtil;
 public class BankUtilTest extends AbstractScript {
 
     private enum TestState {
-        DUMP_ITEMS, // PASS
+        DUMP_ITEMS,     // PASS
         VERIFY_DUMP,    // PASS
+        CHECK_STOCK,    // PASS
+        CHECK_COINS,    // PASS
+        GET_ITEMS,      // PASS
         FINISHED
     }
 
-    private TestState currentTest = TestState.DUMP_ITEMS;
+    private TestState currentTest = TestState.CHECK_STOCK;
+
+    private static final String TEST_ITEM = "Chocolate dust";
+    private static final int TEST_AMOUNT = 5;
+    private static final int TEST_COINS = 10000;
 
     @Override
     public int onLoop() {
@@ -47,8 +54,29 @@ public class BankUtilTest extends AbstractScript {
                 currentTest = TestState.FINISHED;
                 return 1000;
 
+            case CHECK_STOCK:
+                Logger.log("Testing isOutOfStock for " + TEST_ITEM);
+                boolean outOfStock = BankUtil.isOutOfStock(TEST_ITEM);
+                Logger.log(TEST_ITEM + " is " + (outOfStock ? "out of stock" : "in stock"));
+                currentTest = TestState.CHECK_COINS;
+                return 1000;
+
+            case CHECK_COINS:
+                Logger.log("Testing hasEnoughCoins for " + TEST_COINS + " coins");
+                boolean hasCoins = BankUtil.hasEnoughCoins(TEST_COINS);
+                Logger.log((hasCoins ? "Has enough" : "Not enough") + " coins");
+                currentTest = TestState.GET_ITEMS;
+                return 1000;
+
+            case GET_ITEMS:
+                Logger.log("Testing getItemFromBank for " + TEST_AMOUNT + " " + TEST_ITEM);
+                boolean gotItems = BankUtil.getItemFromBank(TEST_ITEM, TEST_AMOUNT);
+                Logger.log((gotItems ? "Successfully got" : "Failed to get") + " items from bank");
+                currentTest = TestState.FINISHED;
+                return 1000;
+
             case FINISHED:
-                Logger.log("Bank util test completed!");
+                Logger.log("All bank util extended tests completed!");
                 stop();
                 return -1;
         }
