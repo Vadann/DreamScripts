@@ -13,6 +13,9 @@ import org.dreambot.api.methods.container.impl.equipment.Equipment;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.wrappers.widgets.WidgetChild;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class GrandExchangeUtil {
 
     private static final int MAX_BUY_PRICE_INCREASE = 10; // Percentage above market price
@@ -23,7 +26,22 @@ public class GrandExchangeUtil {
      * @return true if all missing gear was purchased
      */
     public static boolean buyMissingGear(String[] requiredGear) {
-        // First ensure we're at the GE and it's open
+        // First create list of items we actually need to buy
+        List<String> itemsToBuy = new ArrayList<>();
+        for (String gear : requiredGear) {
+            if (!Equipment.contains(gear) && !Inventory.contains(gear) &&
+                    !BankUtil.isOutOfStock(gear)) {
+                itemsToBuy.add(gear);
+            }
+        }
+
+        // If nothing to buy, return true
+        if (itemsToBuy.isEmpty()) {
+            Logger.log("No items to buy");
+            return true;
+        }
+
+        // Now handle the GE operations
         if (!GrandExchange.isOpen()) {
             Walking.walk(GE_AREA.getCenter());
 
@@ -34,30 +52,42 @@ public class GrandExchangeUtil {
             Sleep.sleepUntil(GrandExchange::isOpen, 3000);
         }
 
+        // Buy all items before collecting
         boolean allPurchased = true;
-
-        for (String gear : requiredGear) {
-            // Skip if we already have it
-            if (Equipment.contains(gear) || Inventory.contains(gear) ||
-                    BankUtil.isOutOfStock(gear)) {
-                continue;
-            }
-
-            // Try to buy the item
-            if (!buyItem(gear, 1)) {
+        for (String gear : itemsToBuy) {
+            if (!createBuyOffer(gear, 1)) {
                 allPurchased = false;
                 Logger.log("Failed to buy: " + gear);
             }
         }
 
+        // Collect all items at once
+        Sleep.sleep(1000, 1500);
+        WidgetChild collectButton = Widgets.getWidgetChild(465, 6, 0);
+        if (collectButton != null && collectButton.isVisible()) {
+            collectButton.interact("Collect to bank");
+            Sleep.sleep(600, 800);
+        }
+
+        // Close GE after all operations
+        GrandExchange.close();
+        Sleep.sleep(600, 800);
+
         return allPurchased;
     }
 
-    /**
-     * Attempts to buy an item from the GE with proper checks and validations
-     */
+    // Separated buy offer creation from collection
+    private static boolean createBuyOffer(String itemName, int quantity) {
+        // Get price
+        int basePrice = LivePrices.getHigh(itemName);
+        int buyPrice = (int)(basePrice * 1.1); // 10% above market price
+
+        // Create buy offer
+        return GrandExchange.buyItem(itemName, quantity, buyPrice);
+    }
+
+    // For single item purchases
     public static boolean buyItem(String itemName, int quantity) {
-        // First ensure GE is open
         if (!GrandExchange.isOpen()) {
             if (!GrandExchange.open()) {
                 Logger.log("Failed to open Grand Exchange");
@@ -66,23 +96,21 @@ public class GrandExchangeUtil {
             Sleep.sleepUntil(GrandExchange::isOpen, 3000);
         }
 
-        // Get price
-        int basePrice = LivePrices.getHigh(itemName);
-        int buyPrice = (int)(basePrice * 1.1); // 10% above market price
+        boolean success = createBuyOffer(itemName, quantity);
 
-        // Create buy offer
-        if (GrandExchange.buyItem(itemName, quantity, buyPrice)) {
+        if (success) {
             Sleep.sleep(1000, 1500);
-
-            // Wait for completion and collect using widget
             WidgetChild collectButton = Widgets.getWidgetChild(465, 6, 0);
             if (collectButton != null && collectButton.isVisible()) {
                 collectButton.interact("Collect to bank");
                 Sleep.sleep(600, 800);
-                return true;
             }
         }
 
-        return false;
+        // Close GE after operation
+        GrandExchange.close();
+        Sleep.sleep(600, 800);
+
+        return success;
     }
 } 
