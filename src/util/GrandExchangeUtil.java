@@ -38,8 +38,8 @@ public class GrandExchangeUtil {
 
         for (String gear : requiredGear) {
             // Skip if we already have it
-            if (Equipment.contains(gear) || Inventory.contains(gear) || 
-                BankUtil.isOutOfStock(gear)) {
+            if (Equipment.contains(gear) || Inventory.contains(gear) ||
+                    BankUtil.isOutOfStock(gear)) {
                 continue;
             }
 
@@ -73,7 +73,7 @@ public class GrandExchangeUtil {
         // Create buy offer
         if (GrandExchange.buyItem(itemName, quantity, buyPrice)) {
             Sleep.sleep(1000, 1500);
-            
+
             // Wait for completion and collect using widget
             WidgetChild collectButton = Widgets.getWidgetChild(465, 6, 0);
             if (collectButton != null && collectButton.isVisible()) {
