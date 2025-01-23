@@ -20,11 +20,12 @@ public class EquipmentUtilTest extends AbstractScript {
         EQUIP_FROM_INVENTORY,   // PASS
         GET_AND_EQUIP_FROM_BANK,    // PASS
         ENSURE_GEAR_EQUIPPED,
-        CHECK_WEALTH_RING,
+        CHECK_WEALTH_RING,  // PASS
+        CHECK_WEALTH_RING_CHARGES, // PASS
         FINISHED
     }
 
-    private TestState currentTest = TestState.GET_AND_EQUIP_FROM_BANK;
+    private TestState currentTest = TestState.CHECK_WEALTH_RING_CHARGES;
     
     private static final String[] TEST_GEAR = {
         "Rune scimitar",
@@ -74,6 +75,10 @@ public class EquipmentUtilTest extends AbstractScript {
                 Logger.log("Wealth ring charges: " + EquipmentUtil.getWealthRingCharges());
                 currentTest = TestState.FINISHED;
                 return 1000;
+            case CHECK_WEALTH_RING_CHARGES:
+                Logger.log("Testing checking wealth ring chargest");
+                Logger.log("Wealth ring has " + EquipmentUtil.getWealthRingCharges() + " charges");
+                currentTest = TestState.FINISHED;
 
             case FINISHED:
                 Logger.log("All Equipment Util tests completed!");

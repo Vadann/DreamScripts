@@ -100,14 +100,40 @@ public class EquipmentUtil {
      * Checks if wealth ring is equipped
      */
     public static boolean hasWealthRing() {
-        return Equipment.contains("Ring of wealth");
+        Item ring = Equipment.getItemInSlot(EquipmentSlot.RING);
+        if (ring != null) {
+            return Equipment.contains(ring);
+        }
+
+        return false;
+
     }
     
     /**
-     * Gets wealth ring charges
+     * Gets the number of charges remaining on equipped Ring of Wealth
+     * @return number of charges, or 0 if no ring equipped
      */
     public static int getWealthRingCharges() {
-        // Implementation to check charges
-        return -1; // TODO: Implement charge checking
+        if (!hasWealthRing()) {
+            return 0;
+        }
+        
+        Item ring = Equipment.getItemInSlot(EquipmentSlot.RING.getSlot());
+        if (ring == null) {
+            return 0;
+        }
+        
+        // Ring names are like "Ring of wealth (5)" where 5 is charges
+        String name = ring.getName();
+        if (name.contains("(") && name.contains(")")) {
+            try {
+                String chargesStr = name.substring(name.indexOf("(") + 1, name.indexOf(")"));
+                return Integer.parseInt(chargesStr);
+            } catch (Exception e) {
+                return 0;
+            }
+        }
+        
+        return 0;
     }
 } 

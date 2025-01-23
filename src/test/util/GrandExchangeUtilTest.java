@@ -17,13 +17,14 @@ import util.GrandExchangeUtil;
 public class GrandExchangeUtilTest extends AbstractScript {
 
     private enum TestState {
-        BUY_ITEM,
-        BUY_SINGLE_ITEM,
-        BUY_MULTIPLE_ITEMS,
+        BUY_ITEM,   // SEMI - PASS need to add validation
+        BUY_SINGLE_ITEM,    // ^^
+        BUY_MULTIPLE_ITEMS, // ^^^^
+        TRAVEL_TO_GE,   // PASS
         FINISHED
     }
 
-    private TestState currentTest = TestState.BUY_ITEM;
+    private TestState currentTest = TestState.TRAVEL_TO_GE;
     
     private static final String TEST_ITEM = "Rune scimitar";
     private static final String[] TEST_ITEMS = {
@@ -57,6 +58,13 @@ public class GrandExchangeUtilTest extends AbstractScript {
                 Logger.log("Testing buying multiple items...");
                 boolean multipleBought = GrandExchangeUtil.buyMissingGear(TEST_ITEMS);
                 Logger.log("Successfully bought multiple items: " + multipleBought);
+                currentTest = TestState.FINISHED;
+                return 1000;
+
+            case TRAVEL_TO_GE:
+                Logger.log("Testing Traveling to GE");
+                boolean traveled = GrandExchangeUtil.travelToGE();
+                Logger.log("Finished traveling to GE" + traveled);
                 currentTest = TestState.FINISHED;
                 return 1000;
 
