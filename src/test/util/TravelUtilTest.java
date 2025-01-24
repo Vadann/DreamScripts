@@ -19,46 +19,25 @@ import util.Constant;
 public class TravelUtilTest extends AbstractScript {
 
     private enum TestState {
-        TEST_EQUIPMENT_TP,
-        TEST_TP_TAB,    // PASS
-        VERIFY_POSITION,
+        TEST_TRAVEL_TO_TILE,    // PASS
+        TEST_TRAVEL_TO_AREA,
+        TEST_TP_TAB,
         FINISHED
     }
 
-    private TestState currentTest = TestState.TEST_TP_TAB;
+    private TestState currentTest = TestState.TEST_TRAVEL_TO_TILE;
     // private static final int POSITION_CHECK_TIMEOUT = 5000;
 
     @Override
     public int onLoop() {
         switch (currentTest) {
-
-            case TEST_EQUIPMENT_TP:
-                Logger.log("=== Testing: Ring of Wealth Teleport ===");
-                if (TravelUtil.useEquipmentTeleport(EquipmentSlot.RING, "Grand Exchange")) {
-                    Logger.log("Successfully used Ring of Wealth teleport");
-                    currentTest = TestState.FINISHED;
-                } else {
-                    Logger.log("Failed to use Ring of Wealth teleport");
-                    currentTest = TestState.FINISHED;
-                }
-                return 1000;
-
-            case TEST_TP_TAB:
-                Logger.log("=== Testing: Varrock Teleport Tablet ===");
-                if (TravelUtil.useTeleportationTablet("Varrock teleport")) {
-                    Logger.log("Successfully used Varrock teleport");
-                    currentTest = TestState.FINISHED;
-                } else {
-                    Logger.log("Failed to use Varrock teleport");
-                    currentTest = TestState.FINISHED;
-                }
-                return 1000;
-
-            case VERIFY_POSITION:
-                Logger.log("=== Verifying Final Position ===");
-                logCurrentPosition();
+            case TEST_TRAVEL_TO_TILE:
+                Logger.log("=== TESTING: Traveling to tile " + Constant.GE_CLERK_TILE.toString());
+                boolean traveledToTile = TravelUtil.walkToTile(Constant.GE_CLERK_TILE);
+                Logger.log("TESTING: Traveling to tile test result " + traveledToTile);
                 currentTest = TestState.FINISHED;
                 return 1000;
+
 
             case FINISHED:
                 Logger.log("All travel util tests completed!");
@@ -68,19 +47,15 @@ public class TravelUtilTest extends AbstractScript {
         return 1000;
     }
 
-    private void logCurrentPosition() {
-        Logger.log("Current position: " + Players.getLocal().getTile().toString());
-    }
-
     @Override
     public void onStart() {
         Logger.log("Starting Travel Util Tests");
-        logCurrentPosition();
+        Logger.log("Current position: " + Players.getLocal().getTile().toString());
     }
 
     @Override
     public void onExit() {
         Logger.log("Travel Util Tests completed");
-        logCurrentPosition();
+        Logger.log("Final position: " + Players.getLocal().getTile().toString());
     }
 } 
